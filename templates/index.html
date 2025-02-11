@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MT5 Trading Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .card {
+        margin-bottom: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .refresh-btn {
+        margin-bottom: 20px;
+      }
+      .alert {
+        animation: slideIn 0.5s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .tooltip-inner {
+        max-width: 200px;
+        padding: 8px;
+        text-align: left;
+        white-space: pre-line;
+      }
+      .input-group-sm .form-control {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+      }
+
+      .input-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      .card-title {
+        color: #2c3e50;
+        font-weight: 600;
+      }
+
+      .form-label {
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+      }
+
+      .input-group {
+        margin-bottom: 0.5rem;
+      }
+
+      .input-group .btn {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+
+      .form-control {
+        border-radius: 5px;
+        border: 1px solid #ced4da;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      }
+
+      .btn-outline-primary {
+        border-color: #007bff;
+        color: white;
+        background-color: #007bff;
+      }
+
+      .text-muted {
+        font-size: 0.875rem;
+      }
+
+      .badge {
+        padding: 0.5rem 1rem;
+      }
+
+      hr {
+        opacity: 0.15;
+      }
+
+      #robotToggle {
+        min-width: 200px;
+      }
+
+      #robotStatus {
+        font-weight: normal;
+      }
+
+      @media (max-width: 768px) {
+        .row > div {
+          margin-bottom: 1rem;
+        }
+
+        #robotToggle {
+          width: 100%;
+          margin-bottom: 1rem;
+        }
+
+        .d-flex {
+          flex-direction: column;
+          align-items: stretch !important;
+        }
+
+        .badge {
+          text-align: center;
+          margin-top: 1rem;
+        }
+      }
+
+      /* Styling untuk tabel posisi aktif */
+      .table-container {
+        height: 400px; /* Tinggi tetap untuk 10 baris */
+        overflow-y: auto;
+        border-radius: 5px;
+        position: relative;
+      }
+
+      /* Make header sticky */
+      .table thead {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Styling untuk tabel */
+      .table {
+        margin-bottom: 0;
+      }
+
+      .table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        color: #2c3e50;
+        white-space: nowrap;
+      }
+
+      .table td {
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+
+      /* Custom scrollbar */
+      .table-container::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      .table-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+      }
+
+      .table-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+      }
+
+      /* Hover effect pada baris tabel */
+      .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+      }
+
+      /* Style untuk input fields dalam tabel */
+      .table .input-group-sm {
+        width: 150px;
+      }
+
+      .table .input-group-sm .form-control {
+        height: 28px;
+        padding: 0.25rem 0.5rem;
+      }
+
+      .table .input-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      /* Style untuk badges dan buttons */
+      .table .badge {
+        padding: 0.5em 0.75em;
+      }
+
+      .table .btn-group {
+        white-space: nowrap;
+      }
+
+      .table .btn-sm {
+        padding: 0.25rem 0.5rem;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .table-container {
+          height: 350px;
+        }
+
+        .table {
+          font-size: 0.875rem;
+        }
+
+        .table .input-group-sm {
+          width: 120px;
+        }
+      }
+
+      /* Animation for new rows */
+      @keyframes highlightNew {
+        from {
+          background-color: rgba(0, 123, 255, 0.1);
+        }
+        to {
+          background-color: transparent;
+        }
+      }
+
+      .table tbody tr.new-row {
+        animation: highlightNew 1s ease-out;
+      }
+
+      .input-group-text {
+        font-size: 0.875rem;
+        background-color: #f8f9fa;
+        color: #6c757d;
+      }
+
+      small.text-muted {
+        font-size: 0.75rem;
+      }
+
+      /* Tambahkan CSS untuk ringkasan pair */
+      .card {
+        transition: all 0.3s ease;
+      }
+
+      /* .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      } */
+
+      .card.border-warning {
+        border-width: 2px;
+      }
+
+      .card.border-success {
+        border-width: 2px;
+      }
+
+      .progress {
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 4px;
+      }
+
+      .progress-bar {
+        transition: width 0.3s ease;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .col-sm-6 {
+          margin-bottom: 1rem;
+        }
+      }
+
+      /* Animation for new/updated cards */
+      @keyframes highlight {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.02);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .card.highlight {
+        animation: highlight 0.5s ease;
+      }
+
+      .text-success {
+        color: green;
+      }
+      .text-danger {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-4">
+      <div class="text-center mb-4">
+        <h1 class="display-4">Dashboard Robot Trading</h1>
+        <div class="alert alert-warning" role="alert">
+          *Masih dalam pengembangan
+          <h2 class="lead">Dikembangkan oleh: LT01</h2>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title mb-4">Pengaturan Robot</h5>
+
+              <!-- Lot Size -->
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label for="lotSize" class="form-label fw-bold"
+                    >Ukuran Lot:</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="lotSize"
+                      step="0.01"
+                      min="0.01"
+                      value="0.01"
+                    />
+                    <button class="btn btn-outline-primary" onclick="setLot()">
+                      Set Lot
+                    </button>
+                  </div>
+                  <small class="text-muted"
+                    >Minimal 0.01, maksimal 100 lot</small
+                  >
+                </div>
+
+                <!-- Max Positions -->
+                <div class="col-md-6">
+                  <label for="maxPositions" class="form-label fw-bold"
+                    >Maksimal Posisi per Pair:</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="maxPositions"
+                      min="1"
+                      max="10"
+                      value="2"
+                    />
+                    <button
+                      class="btn btn-outline-primary"
+                      onclick="setMaxPositions()"
+                    >
+                      Set Max Posisi
+                    </button>
+                  </div>
+                  <small class="text-muted"
+                    >Minimal 1, maksimal 10 posisi per pair</small
+                  >
+                </div>
+              </div>
+
+              <!-- SL/TP Settings -->
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label for="slPips" class="form-label fw-bold"
+                    >Stop Loss:</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="slPips"
+                      step="1"
+                      min="100"
+                      value="100"
+                    />
+                    <span class="input-group-text">points</span>
+                  </div>
+                  <small class="text-muted"
+                    >Minimal 100 points, default: 100 points</small
+                  >
+                </div>
+                <div class="col-md-6">
+                  <label for="tpPips" class="form-label fw-bold"
+                    >Take Profit:</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="tpPips"
+                      step="1"
+                      min="100"
+                      value="100"
+                    />
+                    <span class="input-group-text">points</span>
+                  </div>
+                  <small class="text-muted"
+                    >Minimal 100 points, default: 100 points</small
+                  >
+                </div>
+              </div>
+
+              <!-- SL/TP Button -->
+              <div class="mb-4">
+                <button class="btn btn-primary" onclick="setSlTp()">
+                  Set SL/TP
+                </button>
+              </div>
+
+              <hr class="my-4" />
+
+              <!-- Robot Status -->
+              <div class="d-flex align-items-center">
+                <button
+                  class="btn btn-lg btn-success me-3"
+                  id="robotToggle"
+                  onclick="toggleRobot()"
+                >
+                  Aktifkan Robot
+                </button>
+                <span class="badge bg-secondary fs-6" id="robotStatus"
+                  >Status: Nonaktif</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-12 mt-3">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Status Signal Trading</h5>
+              <div id="signalStatus" class="alert alert-info">
+                Menunggu sinyal...
+              </div>
+              <div class="mt-3">
+                <h6>Pair yang Dipantau:</h6>
+                <div class="row" id="pairStatus">
+                  <!-- Pairs will be populated here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h6 class="card-title">Balance</h6>
+              <p class="card-text h5" id="balance">Rp 0,00</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h6 class="card-title">Equity</h6>
+              <p class="card-text h5" id="equity">Rp 0,00</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-body">
+              <h6 class="card-title">Free Margin</h6>
+              <p class="card-text h5" id="freeMargin">Rp 0,00</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-4">
+                <h5 class="card-title mb-0">Total Profit/Loss</h5>
+                <h3 id="totalProfit" class="mb-0">Loading...</h3>
+                <p id="positionCount" class="mb-0 card-title">0 POSISI TERBUKA</p>
+              </div>
+              <div class="col-md-8 text-end">
+                <button class="btn btn-warning" onclick="closeAllPositions()">
+                  Tutup Semua Posisi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Posisi Aktif</h5>
+          <div class="table-container">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Symbol</th>
+                  <th>Type</th>
+                  <th>Volume</th>
+                  <th>Open Price</th>
+                  <th>Current</th>
+                  <th>SL</th>
+                  <th>TP</th>
+                  <th>Profit</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="positions"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tambahkan setelah card pengaturan robot dan sebelum tabel posisi -->
+      <div class="card mt-4 mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Ringkasan Posisi per Pair</h5>
+          <div class="row" id="pairSummary">
+            <!-- Data akan diisi oleh JavaScript -->
+            <!-- Contoh card untuk setiap pair -->
+            <div class="col-md-3 col-sm-6 mb-3">
+              <div class="card h-100 border-success" data-pair="EURUSD">
+                <div class="card-body p-3">
+                  <h6 class="card-title mb-2 d-flex justify-content-between">
+                    <span>EURUSD</span>
+                    <span class="badge bg-success">2/2</span>
+                  </h6>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Deklarasi variabel global
+      let previousPairCounts = {}; // Inisialisasi dengan objek kosong
+
+      function formatCurrency(number) {
+        return new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+        }).format(number);
+      }
+
+      function refreshData() {
+        fetch("/get_trading_info")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Update account info
+            document.getElementById("balance").textContent = formatCurrency(
+              data.balance
+            );
+            document.getElementById("equity").textContent = formatCurrency(
+              data.equity
+            );
+            document.getElementById("freeMargin").textContent = formatCurrency(
+              data.margin_free
+            );
+
+            // Update total profit/loss
+            let totalProfit = 0;
+            if (data.positions) {
+              totalProfit = data.positions.reduce(
+                (sum, pos) => sum + pos.profit,
+                0
+              );
+            }
+            document.getElementById("totalProfit").textContent =
+              formatCurrency(totalProfit);
+            document.getElementById("positionCount").textContent = `${
+              data.positions ? data.positions.length : 0
+            } posisi terbuka`;
+
+            // Update positions table
+            const positionsTable = document.getElementById("positions");
+            positionsTable.innerHTML = "";
+
+            if (data.positions && data.positions.length > 0) {
+              data.positions.forEach((pos) => {
+                const row = `
+                  <tr>
+                    <td>${pos.ticket}</td>
+                    <td>${pos.symbol}</td>
+                    <td>
+                      <span class="badge ${
+                        pos.type === "BUY" ? "bg-success" : "bg-danger"
+                      }">
+                        ${pos.type}
+                      </span>
+                    </td>
+                    <td>${pos.volume}</td>
+                    <td>${pos.price_open}</td>
+                    <td>${pos.price_current}</td>
+                    <td>
+                      <div class="input-group input-group-sm" style="position: sticky; top: 0; z-index: 0;">
+                        <input type="number" 
+                               class="form-control form-control-sm" 
+                               id="sl_${pos.ticket}" 
+                               value="${pos.sl}"
+                               step="${pos.point_size || 0.00001}">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                onclick="modifyPosition('${
+                                  pos.ticket
+                                }', true, false)">
+                          Set
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                                <div class="input-group input-group-sm" style="position: sticky; top: 0; z-index: 0;">
+
+                        <input type="number" 
+                               class="form-control form-control-sm" 
+                               id="tp_${pos.ticket}" 
+                               value="${pos.tp}"
+                               step="${pos.point_size || 0.00001}">
+                        <button class="btn btn-sm btn-outline-secondary"
+                                onclick="modifyPosition('${
+                                  pos.ticket
+                                }', false, true)">
+                          Set
+                        </button>
+                      </div>
+                    </td>
+                    <td class="${
+                      pos.profit >= 0 ? "text-success" : "text-danger"
+                    } fw-bold">
+                      ${formatCurrency(pos.profit)}
+                      <br>
+                      <small>(${pos.profit_points} points)</small>
+                      ${
+                        pos.show_be_button
+                          ? `<button class="btn btn-sm btn-success ms-2" 
+                                  onclick="moveSlToEntry('${pos.ticket}')"
+                                  title="Move SL to Entry (Break Even)">
+                            BE
+                          </button>`
+                          : ""
+                      }
+                      ${
+                        pos.auto_be_executed
+                          ? `<span class="badge bg-info ms-2" title="Auto Break Even Executed">
+                            Auto BE
+                          </span>`
+                          : ""
+                      }
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-danger" 
+                              onclick="closePosition('${pos.ticket}', '${
+                  pos.symbol
+                }')">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `;
+                positionsTable.innerHTML += row;
+              });
+            } else {
+              positionsTable.innerHTML = `
+                <tr>
+                  <td colspan="10" class="text-center">
+                    Tidak ada posisi terbuka
+                  </td>
+                </tr>
+              `;
+            }
+
+            const pairSummaryDiv = document.getElementById("pairSummary");
+            pairSummaryDiv.innerHTML = "";
+
+            if (
+              data.positions_per_pair &&
+              Object.keys(data.positions_per_pair).length > 0
+            ) {
+              Object.entries(data.positions_per_pair).forEach(
+                ([pair, count]) => {
+                  const card = `
+                  <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card h-100 ${
+                      count >= data.max_positions_per_pair
+                        ? "border-warning"
+                        : "border-success"
+                    }"
+                         data-pair="${pair}">
+                      <div class="card-body p-3">
+                        <h6 class="card-title mb-2 d-flex justify-content-between">
+                          <span>${pair}</span>
+                          <span class="badge ${
+                            count >= data.max_positions_per_pair
+                              ? "bg-warning"
+                              : "bg-success"
+                          }">
+                            ${count}/${data.max_positions_per_pair}
+                          </span>
+                        </h6>
+                        <div class="progress" style="height: 8px;">
+                          <div class="progress-bar ${
+                            count >= data.max_positions_per_pair
+                              ? "bg-warning"
+                              : "bg-success"
+                          }" 
+                               role="progressbar" 
+                               style="width: ${
+                                 (count / data.max_positions_per_pair) * 100
+                               }%">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                  pairSummaryDiv.innerHTML += card;
+                }
+              );
+
+              highlightChanges(data.positions_per_pair);
+            } else {
+              pairSummaryDiv.innerHTML = `
+                <div class="col-12">
+                    Tidak ada posisi terbuka
+                </div>
+              `;
+            }
+
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification(
+              "Error saat memperbarui data: " + error.message,
+              true
+            );
+          });
+      }
+
+      function toggleRobot() {
+        fetch("/toggle_robot", {
+          method: "POST",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            robotActive = data.status === "active";
+            updateRobotUI();
+            showNotification(data.message);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification("Error saat mengubah status robot", true);
+          });
+      }
+
+      function setLot() {
+        const lotSize = document.getElementById("lotSize").value;
+        fetch("/set_lot", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ lot: lotSize }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              alert(data.error);
+            } else {
+              alert(data.message);
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function updateRobotUI() {
+        const button = document.getElementById("robotToggle");
+        const status = document.getElementById("robotStatus");
+
+        if (robotActive) {
+          button.classList.remove("btn-success");
+          button.classList.add("btn-danger");
+          button.textContent = "Hentikan Robot";
+          status.textContent = "Status: Aktif";
+        } else {
+          button.classList.remove("btn-danger");
+          button.classList.add("btn-success");
+          button.textContent = "Aktifkan Robot";
+          status.textContent = "Status: Nonaktif";
+        }
+      }
+
+      // Get initial robot status
+      fetch("/get_robot_status")
+        .then((response) => response.json())
+        .then((data) => {
+          robotActive = data.active;
+          document.getElementById("lotSize").value = data.lot;
+          updateRobotUI();
+        })
+        .catch((error) => console.error("Error:", error));
+
+      // Get initial SL/TP values
+      fetch("/get_sl_tp")
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("slPips").value = data.sl;
+          document.getElementById("tpPips").value = data.tp;
+        })
+        .catch((error) => console.error("Error:", error));
+
+      // Get initial max positions value
+      fetch("/get_max_positions")
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("maxPositions").value = data.max_positions;
+        })
+        .catch((error) => console.error("Error:", error));
+
+      // Set interval untuk auto refresh
+      let refreshInterval;
+
+      function startAutoRefresh() {
+        // Initial refresh
+        refreshData();
+        // Set interval setiap 1 detik
+        refreshInterval = setInterval(refreshData, 1000);
+      }
+
+      function stopAutoRefresh() {
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+        }
+      }
+
+      // Start auto refresh when page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        startAutoRefresh();
+
+        // Load initial SL/TP values
+        fetch("/get_sl_tp")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("slPips").value = data.sl;
+            document.getElementById("tpPips").value = data.tp;
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+
+      // Stop refresh when page is hidden
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+          stopAutoRefresh();
+        } else {
+          startAutoRefresh();
+        }
+      });
+
+      function updateSignalStatus() {
+        if (!robotActive) {
+          document.getElementById("signalStatus").className =
+            "alert alert-secondary";
+          document.getElementById("signalStatus").textContent =
+            "Robot tidak aktif";
+          document.getElementById("pairStatus").innerHTML = "";
+          return;
+        }
+
+        fetch("/get_signal_status")
+          .then((response) => response.json())
+          .then((data) => {
+            const signalDiv = document.getElementById("signalStatus");
+            const signal = data.signal;
+            const pairStatusDiv = document.getElementById("pairStatus");
+
+            switch (signal.status) {
+              case "signal":
+                signalDiv.className = "alert alert-success";
+                let message = `${signal.time}: Sinyal ${signal.type} terdeteksi untuk ${signal.symbol} pada harga ${signal.price}`;
+                if (signal.execution_status) {
+                  message += `\n${signal.execution_status}`;
+                }
+                signalDiv.textContent = message;
+                break;
+              case "no_signal":
+                signalDiv.className = "alert alert-info";
+                signalDiv.textContent = signal.message;
+
+                // Update pair status
+                if (signal.checked_pairs) {
+                  pairStatusDiv.innerHTML = signal.checked_pairs
+                    .map(
+                      (pair) => `
+                        <div class="col-md-3 mb-2">
+                          <span class="badge bg-secondary">${pair}</span>
+                        </div>
+                      `
+                    )
+                    .join("");
+                }
+                break;
+              case "error":
+                signalDiv.className = "alert alert-danger";
+                signalDiv.textContent = signal.message;
+                break;
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            document.getElementById("signalStatus").className =
+              "alert alert-danger";
+            document.getElementById("signalStatus").textContent =
+              "Error mengambil status sinyal";
+          });
+      }
+
+      // Update signal status every 5 seconds
+      setInterval(updateSignalStatus, 5000);
+
+      // Update initial signal status
+      updateSignalStatus();
+
+      function updateTotalProfit() {
+        fetch("/get_total_profit")
+          .then((response) => response.json())
+          .then((data) => {
+            const profitElement = document.getElementById("totalProfit");
+            const profit = parseFloat(data.total_profit);
+            
+            // Mengatur teks dan kelas berdasarkan nilai profit
+            profitElement.textContent = formatCurrency(profit);
+            profitElement.className = profit >= 0 ? "text-success" : "text-danger";
+
+            document.getElementById("positionCount").textContent = `${data.position_count} posisi terbuka`;
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function showNotification(message, isError = false) {
+        const notifDiv = document.createElement("div");
+        notifDiv.className = `alert alert-${
+          isError ? "danger" : "success"
+        } position-fixed top-0 end-0 m-3`;
+        notifDiv.style.zIndex = "9999";
+        notifDiv.textContent = message;
+        document.body.appendChild(notifDiv);
+
+        // Hapus notifikasi setelah 3 detik
+        setTimeout(() => {
+          notifDiv.remove();
+        }, 3000);
+      }
+
+      function closePosition(ticket, symbol) {
+        const button = document.querySelector(
+          `button[data-ticket="${ticket}"]`
+        );
+        if (button) {
+          button.disabled = true;
+          button.innerHTML =
+            '<span class="spinner-border spinner-border-sm"></span> Menutup...';
+        }
+
+        fetch("/close_position", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ticket: ticket,
+            symbol: symbol,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showNotification(data.error, true);
+            } else {
+              showNotification(data.message);
+              refreshData();
+              updateTotalProfit();
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification("Terjadi kesalahan saat menutup posisi", true);
+          })
+          .finally(() => {
+            if (button) {
+              button.disabled = false;
+              button.innerHTML = '<i class="fas fa-times"></i> Tutup';
+            }
+          });
+      }
+
+      function showPositionDetails(ticket) {
+        // Tambahkan modal untuk menampilkan detail posisi
+        fetch(`/get_position_details/${ticket}`)
+          .then((response) => response.json())
+          .then((data) => {
+            const details = `
+              Ticket: ${data.ticket}
+              Symbol: ${data.symbol}
+              Type: ${data.type}
+              Volume: ${data.volume}
+              Open Price: ${data.price_open}
+              Current Price: ${data.price_current}
+              Profit: ${formatCurrency(data.profit)}
+              Swap: ${formatCurrency(data.swap)}
+              Open Time: ${data.time_open}
+            `;
+            alert(details); // Atau gunakan modal Bootstrap yang lebih bagus
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function closeAllPositions() {
+        const closeAllButton = document.querySelector(
+          'button[onclick="closeAllPositions()"]'
+        );
+        if (closeAllButton) {
+          closeAllButton.disabled = true;
+          closeAllButton.innerHTML =
+            '<span class="spinner-border spinner-border-sm"></span> Menutup Semua...';
+        }
+
+        fetch("/close_all_positions", {
+          method: "POST",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            showNotification(data.message);
+            refreshData();
+            updateTotalProfit();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification(
+              "Terjadi kesalahan saat menutup semua posisi",
+              true
+            );
+          })
+          .finally(() => {
+            if (closeAllButton) {
+              closeAllButton.disabled = false;
+              closeAllButton.innerHTML = "Tutup Semua Posisi";
+            }
+          });
+      }
+
+      // Tambahkan fungsi untuk mengatur SL/TP
+      function setSlTp() {
+        const sl = parseInt(document.getElementById("slPips").value);
+        const tp = parseInt(document.getElementById("tpPips").value);
+
+        // Validasi input
+        if (isNaN(sl) || isNaN(tp)) {
+          showNotification("Nilai SL/TP harus berupa angka", true);
+          return;
+        }
+
+        if (sl < 100 || tp < 100) {
+          showNotification("Nilai SL/TP minimal 100 points", true);
+          return;
+        }
+
+        if (sl > 500 || tp > 500) {
+          showNotification("Nilai SL/TP maksimal 500 points", true);
+          return;
+        }
+
+        fetch("/set_sl_tp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sl: sl, tp: tp }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showNotification(data.error, true);
+            } else {
+              showNotification(
+                `SL: ${sl} points, TP: ${tp} points berhasil diatur`
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification("Error saat mengatur SL/TP", true);
+          });
+      }
+
+      // Modifikasi fungsi execute_trade untuk menggunakan SL/TP yang diatur
+      function execute_trade(signal) {
+        // ... existing code ...
+        const sl = parseFloat(document.getElementById("slPips").value);
+        const tp = parseFloat(document.getElementById("tpPips").value);
+
+        // Gunakan nilai SL/TP dalam perhitungan order
+        request_data = {
+          // ... existing request data ...
+          sl: calculateSL(signal.price, signal.type, sl),
+          tp: calculateTP(signal.price, signal.type, tp),
+        };
+        // ... rest of the code ...
+      }
+
+      // Helper functions untuk menghitung SL/TP
+      function calculateSL(price, type, pips) {
+        const pipValue = type === "BUY" ? -pips : pips;
+        return price + pipValue * 0.0001;
+      }
+
+      function calculateTP(price, type, pips) {
+        const pipValue = type === "BUY" ? pips : -pips;
+        return price + pipValue * 0.0001;
+      }
+
+      function modifyPosition(ticket, modifySl = false, modifyTp = false) {
+        const sl = modifySl
+          ? parseFloat(document.getElementById(`sl_${ticket}`).value)
+          : null;
+        const tp = modifyTp
+          ? parseFloat(document.getElementById(`tp_${ticket}`).value)
+          : null;
+
+        fetch("/modify_position", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ticket: ticket,
+            sl: sl,
+            tp: tp,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showNotification(data.error, true);
+            } else {
+              showNotification(data.message);
+              refreshData();
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification("Error saat memodifikasi posisi", true);
+          });
+      }
+
+      function moveSlToEntry(ticket) {
+        fetch("/move_sl_to_entry", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ticket: ticket }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showNotification(data.error, true);
+            } else {
+              showNotification(data.message);
+              refreshData();
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification("Error saat memindahkan SL", true);
+          });
+      }
+
+      // Tambahkan fungsi untuk mengatur max positions
+      function setMaxPositions() {
+        const maxPos = parseInt(document.getElementById("maxPositions").value);
+
+        if (isNaN(maxPos) || maxPos < 1 || maxPos > 10) {
+          showNotification("Jumlah posisi harus antara 1-10", true);
+          return;
+        }
+
+        fetch("/set_max_positions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ max_positions: maxPos }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showNotification(data.error, true);
+            } else {
+              showNotification(data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            showNotification("Error saat mengatur maksimal posisi", true);
+          });
+      }
+
+      function highlightChanges(currentPairCounts) {
+        Object.entries(currentPairCounts).forEach(([pair, count]) => {
+          if (previousPairCounts[pair] !== count) {
+            const pairCard = document.querySelector(`[data-pair="${pair}"]`);
+            if (pairCard) {
+              pairCard.classList.add("highlight");
+              setTimeout(() => {
+                pairCard.classList.remove("highlight");
+              }, 500);
+            }
+          }
+        });
+        previousPairCounts = { ...currentPairCounts };
+      }
+
+    </script>
+  </body>
+</html>
