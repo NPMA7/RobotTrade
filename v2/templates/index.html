@@ -309,42 +309,18 @@
       .text-danger {
         color: red;
       }
-      .info-icon {
-        cursor: pointer;
-        margin-left: 5px;
-      }
     </style>
   </head>
   <body>
     <div class="container mt-4">
       <div class="text-center mb-4">
         <h1 class="display-4">Dashboard Robot Trading</h1>
-      </div>
-      <div class="position-fixed top-0 start-0 mt-3" style="z-index: 9999">
-        <div class="alert alert-info">
-          <div id="currentTime">Waktu saat ini: <span id="timeNow"></span> WIB</div>
-          <div id="currentSession" class="">
-            Sesi : <span id="sessionName"></span>
-            <i
-              class="fas fa-info-circle info-icon"
-              onmouseover="showSessionTimes()"
-              onmouseout="hideSessionTimes()"
-            ></i>
-          </div>
-        </div>
-        <div
-          class="mt-2 alert alert alert-secondary"
-          id="sessionTimes"
-          style="display: none"
-        >
-          <p>Asia: </p>
-          <p>00:00 WIB - 09:00 WIB</p>
-          <p>London: </p>
-          <p>09:00 WIB - 17:00 WIB</p>
-          <p>New York: </p>
-          <p>17:00 WIB - 00:00 WIB</p>
+        <div class="alert alert-warning" role="alert">
+          *Masih dalam pengembangan
+          <h2 class="lead">Dikembangkan oleh: LT01</h2>
         </div>
       </div>
+
       <div class="row mb-4">
         <div class="col-md-12">
           <div class="card">
@@ -370,7 +346,9 @@
                       Set Lot
                     </button>
                   </div>
-                  <small class="text-muted">Minimal 0.01, maksimal 1 lot</small>
+                  <small class="text-muted"
+                    >Minimal 0.01, maksimal 1 lot</small
+                  >
                 </div>
 
                 <!-- Max Positions -->
@@ -418,8 +396,7 @@
                     <span class="input-group-text">points</span>
                   </div>
                   <small class="text-muted"
-                    >Minimal 100 points, default: 200 points, untuk XAUUSD dan
-                    BTCUSD minimal 200 points</small
+                  >Minimal 100 points, default: 200 points, unutk XAUUSD minimal 200 points</small
                   >
                 </div>
                 <div class="col-md-6">
@@ -438,8 +415,7 @@
                     <span class="input-group-text">points</span>
                   </div>
                   <small class="text-muted"
-                    >Minimal 100 points, default: 200 points, untuk XAUUSD dan
-                    BTCUSD minimal 200 points</small
+                    >Minimal 100 points, default: 200 points, unutk XAUUSD minimal 200 points</small
                   >
                 </div>
               </div>
@@ -521,9 +497,7 @@
               <div class="col-md-4">
                 <h5 class="card-title mb-0">Total Profit/Loss</h5>
                 <h3 id="totalProfit" class="mb-0">Loading...</h3>
-                <p id="positionCount" class="mb-0 card-title">
-                  0 POSISI TERBUKA
-                </p>
+                <p id="positionCount" class="mb-0 card-title">0 POSISI TERBUKA</p>
               </div>
               <div class="col-md-8 text-end">
                 <button class="btn btn-warning" onclick="closeAllPositions()">
@@ -573,12 +547,8 @@
                     <span>EURUSD</span>
                     <span class="badge bg-success">2/2</span>
                   </h6>
-                  <div class="progress" style="height: 8px">
-                    <div
-                      class="progress-bar bg-success"
-                      role="progressbar"
-                      style="width: 100%"
-                    ></div>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
                   </div>
                 </div>
               </div>
@@ -588,36 +558,11 @@
       </div>
     </div>
 
-    <div class=" w-100 d-flex justify-content-between p-4 bg-white" role="alert">
-      <h6 class="text-small">Masih dalam pengembangan</h6>
-      <h6 class="text-small">Dikembangkan oleh: LT01</h6>
-    </div>
-
     <script>
       // Deklarasi variabel global
       let previousPairCounts = {}; // Inisialisasi dengan objek kosong
       let isEditing = false;
-      function showSessionTimes() {
-        document.getElementById("sessionTimes").style.display = "block";
-      }
-      function hideSessionTimes() {
-        document.getElementById("sessionTimes").style.display = "none";
-      }
-      function updateCurrentTime() {
-        const now = new Date();
-        const options = {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        };
-        document.getElementById("timeNow").textContent = now.toLocaleTimeString(
-          "id-ID",
-          options
-        );
-      }
-      setInterval(updateCurrentTime, 1000); // Update waktu setiap detik
-      updateCurrentTime(); // Set waktu saat ini saat halaman dimuat
+
       function formatCurrency(number) {
         return new Intl.NumberFormat("id-ID", {
           style: "currency",
@@ -811,6 +756,7 @@
                 </div>
               `;
             }
+
           })
           .catch((error) => {
             console.error("Error:", error);
@@ -849,19 +795,13 @@
           .then((response) => response.json())
           .then((data) => {
             if (data.success) {
-              showNotification(
-                `Lot size diubah menjadi ${data.lot}`,
-                "success"
-              );
+              showNotification(`Lot size diubah menjadi ${data.lot}`, 'success');
             } else {
-              showNotification(data.error, "error");
+              showNotification(data.error, 'error');
             }
           })
           .catch((error) => {
-            showNotification(
-              "Terjadi kesalahan saat mengubah lot size.",
-              "error"
-            );
+            showNotification('Terjadi kesalahan saat mengubah lot size.', 'error');
           });
       }
 
@@ -937,9 +877,6 @@
             document.getElementById("tpPips").value = data.tp;
           })
           .catch((error) => console.error("Error:", error));
-
-        updateCurrentSession(); // Memanggil fungsi untuk memperbarui sesi saat halaman dimuat
-        setInterval(updateCurrentSession, 60000); // Perbarui setiap 60 detik
       });
 
       // Stop refresh when page is hidden
@@ -1012,12 +949,12 @@
       }
 
       // Event listener untuk mendeteksi saat pengguna mulai mengetik
-      document.querySelectorAll("input").forEach((input) => {
-        input.addEventListener("focus", () => {
+      document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', () => {
           isEditing = true; // Set flag saat fokus pada input
         });
 
-        input.addEventListener("blur", () => {
+        input.addEventListener('blur', () => {
           isEditing = false; // Reset flag saat keluar dari input
           updateSignalStatus(); // Update status setelah selesai mengedit
         });
@@ -1035,15 +972,12 @@
           .then((data) => {
             const profitElement = document.getElementById("totalProfit");
             const profit = parseFloat(data.total_profit);
-
+            
             // Mengatur teks dan kelas berdasarkan nilai profit
             profitElement.textContent = formatCurrency(profit);
-            profitElement.className =
-              profit >= 0 ? "text-success" : "text-danger";
+            profitElement.className = profit >= 0 ? "text-success" : "text-danger";
 
-            document.getElementById(
-              "positionCount"
-            ).textContent = `${data.position_count} posisi terbuka`;
+            document.getElementById("positionCount").textContent = `${data.position_count} posisi terbuka`;
           })
           .catch((error) => console.error("Error:", error));
       }
@@ -1176,6 +1110,7 @@
           return;
         }
 
+    
         fetch("/set_sl_tp", {
           method: "POST",
           headers: {
@@ -1327,17 +1262,6 @@
         previousPairCounts = { ...currentPairCounts };
       }
 
-      function updateCurrentSession() {
-        fetch("/get_current_session")
-          .then((response) => {
-            return response.json();
-          })
-          .then((data) => {
-            document.getElementById("sessionName").textContent =
-              data.current_session;
-          })
-          .catch((error) => console.error("Error:", error));
-      }
     </script>
   </body>
 </html>

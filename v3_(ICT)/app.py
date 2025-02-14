@@ -21,8 +21,7 @@ AUTO_BE_POINTS = 100   # Pindahkan SL ke entry setelah 100 points
 
 # Tambahkan daftar pair forex yang akan dipantau
 FOREX_PAIRS = [
-    # "EURUSDm","GBPUSD","USDJPYm", "GBPJPYm", "XAUUSDm", "BTCUSDm", "AUDUSDm", "USDCHFm", "USDCADm", "NZDUSDm"
-    "XAUUSDm"
+    "EURUSDm","GBPUSD","USDJPYm", "GBPJPYm", "XAUUSDm", "BTCUSDm", "AUDUSDm", "USDCHFm", "USDCADm", "NZDUSDm"
 ]
 
 # Tambahkan variabel global untuk timeframe
@@ -798,5 +797,5 @@ def main():
     # Tambahkan logika untuk menampilkan informasi lebih lanjut jika diperlukan
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
-    #   app.run(debug=True)
+    # app.run(host='0.0.0.0', port=5000)
+      app.run(debug=True)

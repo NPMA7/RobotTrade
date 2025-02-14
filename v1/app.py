@@ -21,33 +21,23 @@ AUTO_BE_POINTS = 100   # Pindahkan SL ke entry setelah 100 points
 
 # Tambahkan daftar pair forex yang akan dipantau
 FOREX_PAIRS = [
-    # "EURUSDm","GBPUSD","USDJPYm", "GBPJPYm", "XAUUSDm", "BTCUSDm", "AUDUSDm", "USDCHFm", "USDCADm", "NZDUSDm"
-    "XAUUSDm"
+    "EURUSDm","GBPUSD","USDJPYm", "GBPJPYm", "XAUUSDm", "BTCUSDm",
 ]
 
 # Tambahkan variabel global untuk timeframe
-TIMEFRAME_ENTRY = mt5.TIMEFRAME_M5 # Menggunakan timeframe M5
-TIMEFRAME_CONFIRMATION = mt5.TIMEFRAME_M15 # Menggunakan timeframe M15
-TIMEFRAME = TIMEFRAME_ENTRY  # Menambahkan definisi TIMEFRAME
-
+TIMEFRAME = mt5.TIMEFRAME_M5 # Menggunakan timeframe M5
+ 
 # Tambahkan variabel global
 max_positions_per_pair = 1  # Default value
 
-# Variabel global untuk status inisialisasi MT5
-mt5_initialized = False
 
 def initialize_mt5():
-    global mt5_initialized
-    if not mt5_initialized:
-        if not mt5.initialize():
-            print("Inisialisasi MT5 gagal!")
-            return False
-        mt5_initialized = True
+    if not mt5.initialize():
+        print("Inisialisasi MT5 gagal!")
+        return False
     return True
 
 def login_account(login, password, server):
-    if not initialize_mt5():
-        return False
     if not mt5.login(login, password, server):
         print("Login gagal!")
         return False
@@ -59,6 +49,7 @@ def calculate_max_lot(symbol):
     
     symbol_info = mt5.symbol_info(symbol)
     margin_per_lot = symbol_info.margin_initial
+    
     # Gunakan 90% dari free margin yang tersedia
     max_lot = (margin_free * 0.9) / margin_per_lot
     
@@ -73,41 +64,66 @@ class TradingRobot:
         self.take_profit = take_profit
         
     def get_signal(self, symbol):
-        # Mengambil data historis dengan timeframe M5 untuk konfirmasi entry
-        rates_m5 = mt5.copy_rates_from_pos(symbol, TIMEFRAME_ENTRY, 0, 100)
-        df_m5 = pd.DataFrame(rates_m5)
-
-        # Mengambil data historis dengan timeframe M15 untuk memeriksa MSS
-        rates_m15 = mt5.copy_rates_from_pos(symbol, TIMEFRAME_CONFIRMATION, 0, 100)
-        df_m15 = pd.DataFrame(rates_m15)
-
-        # Menentukan kondisi untuk Buy dan Sell
-        current_price_m5 = df_m5['close'].iloc[-1]
-        previous_low_m15 = df_m15['low'].iloc[-2]
-        previous_high_m15 = df_m15['high'].iloc[-2]
-
-        # Asian Session Buy-Setup
-        if current_price_m5 < previous_low_m15:
-            # Tunggu untuk penolakan harga atau MSS
-            if self.check_market_structure_shift(df_m15):
-                return "BUY"
-
-        # Asian Session Sell-Setup
-        if current_price_m5 > previous_high_m15:
-            # Tunggu untuk penolakan harga atau MSS
-            if self.check_market_structure_shift(df_m15):
-                return "SELL"
-
+        # Mengambil data historis dengan timeframe yang ditentukan
+        rates = mt5.copy_rates_from_pos(symbol, TIMEFRAME, 0, 100)
+        df = pd.DataFrame(rates)
+        
+        # Strategi scalping menggunakan MA cepat
+        df['MA5'] = df['close'].rolling(window=5).mean()
+        df['MA10'] = df['close'].rolling(window=10).mean()
+        
+        # RSI untuk konfirmasi
+        delta = df['close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        df['RSI'] = 100 - (100 / (1 + rs))
+        
+        # Stochastic Oscillator
+        df['L14'] = df['low'].rolling(window=14).min()
+        df['H14'] = df['high'].rolling(window=14).max()
+        df['%K'] = (df['close'] - df['L14']) / (df['H14'] - df['L14']) * 100
+        df['%D'] = df['%K'].rolling(window=3).mean()
+        
+        # Hitung ATR untuk mengukur volatilitas
+        df['ATR'] = df['high'].rolling(window=14).max() - df['low'].rolling(window=14).min()
+        
+        # Tambahkan konfirmasi lain, misalnya, MA 50
+        df['MA50'] = df['close'].rolling(window=50).mean()
+        
+        # Hitung Bollinger Bands
+        df['Middle_Band'] = df['close'].rolling(window=20).mean()
+        df['Upper_Band'] = df['Middle_Band'] + (df['close'].rolling(window=20).std() * 2)
+        df['Lower_Band'] = df['Middle_Band'] - (df['close'].rolling(window=20).std() * 2)
+        
+        # Hitung level Fibonacci
+        high_price = df['high'].max()
+        low_price = df['low'].min()
+        diff = high_price - low_price
+        level_23_6 = high_price - diff * 0.236
+        level_38_2 = high_price - diff * 0.382
+        level_61_8 = high_price - diff * 0.618
+        
+        # Generate sinyal dengan kondisi yang lebih ketat
+        if (df['MA5'].iloc[-1] > df['MA10'].iloc[-1] and 
+            df['RSI'].iloc[-1] < 70 and 
+            df['%K'].iloc[-1] > df['%D'].iloc[-1] and  # Konfirmasi Stochastic
+            df['close'].iloc[-1] > df['close'].iloc[-2] and
+            df['close'].iloc[-1] > df['MA50'].iloc[-1] and
+            df['close'].iloc[-1] < df['Upper_Band'].iloc[-1] and
+            df['ATR'].iloc[-1] > 0.0001 and  # Pastikan ATR cukup untuk momentum
+            (df['close'].iloc[-1] > level_38_2 and df['close'].iloc[-1] < level_23_6)):  # Konfirmasi Fibonacci
+            return "BUY"
+        elif (df['MA5'].iloc[-1] < df['MA10'].iloc[-1] and 
+              df['RSI'].iloc[-1] > 30 and 
+              df['%K'].iloc[-1] < df['%D'].iloc[-1] and  # Konfirmasi Stochastic
+              df['close'].iloc[-1] < df['close'].iloc[-2] and
+              df['close'].iloc[-1] < df['MA50'].iloc[-1] and
+              df['close'].iloc[-1] > df['Lower_Band'].iloc[-1] and
+              df['ATR'].iloc[-1] > 0.0001 and  # Pastikan ATR cukup untuk momentum
+              (df['close'].iloc[-1] < level_61_8 and df['close'].iloc[-1] > level_38_2)):  # Konfirmasi Fibonacci
+            return "SELL"
         return None
-
-    def check_market_structure_shift(self, df):
-        # Logika untuk memeriksa apakah ada pergeseran struktur pasar
-        # Misalnya, jika harga menolak dari level tertentu
-        # Implementasikan logika sesuai dengan strategi ICT
-        # Contoh sederhana:
-        if df['close'].iloc[-1] < df['low'].iloc[-2] or df['close'].iloc[-1] > df['high'].iloc[-2]:
-            return True
-        return False
 
     def check_margin(self, symbol):
         account_info = mt5.account_info()
@@ -341,23 +357,6 @@ def execute_trade(signal):
 @app.route('/')
 def index():
     return render_template('index.html')
-
-def get_current_session():
-    now = datetime.now()
-    current_hour = now.hour
-
-    if 0 <= current_hour < 9:
-        return "Asian Session"
-    elif 9 <= current_hour < 17:
-        return "London Session"
-    else:
-        return "New York Session"
-@app.route('/get_current_session')
-def get_current_session_route():
-    session = get_current_session()
-    return jsonify({'current_session': session})
-
-
 @app.route('/get_trading_info')
 def get_trading_info():
     if not mt5.initialize():
@@ -758,20 +757,6 @@ def get_sl_tp():
         'sl': robot_sl_pips,
         'tp': robot_tp_pips
     })
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.json
-    login = data.get('login')
-    password = data.get('password')
-    server = data.get('server')
-
-    if login_account(login, password, server):
-        return jsonify({'status': 'success', 'message': 'Login berhasil!'})
-    else:
-        return jsonify({'status': 'error', 'message': 'Login gagal!'}), 400
-
-
 
 def main():
     # Inisialisasi MT5
